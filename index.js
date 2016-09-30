@@ -36,7 +36,7 @@ function saveStorage() {
 }
 
 function newMessage(text, member, message) {
-  log('['+member.id+'] #'+message.channel.name+'-'+member.username+': '+text);
+  log('['+member.id+'] #'+message.channel.name+'-'+member.user.username+': '+text);
   if (member.id == bot.id) return;
   const respond = (mention, str) => {
     message.channel.sendMessage(str ? mention+': '+str : mention).catch(e => console.log(e));
