@@ -42,7 +42,7 @@ function newMessage(text, member, message) {
     message.channel.sendMessage(str ? mention+': '+str : mention).catch(e => console.log(e));
   }
   if (text == '!hey') {
-    if (config.get('admins').indexOf(member.id) != -1) respond('\u0046\u0075\u0063\u006B\u0020\u0079\u006F\u0075, '+author);
+    if (config.get('admins').indexOf(member.id) != -1) respond('\u0046\u0075\u0063\u006B\u0020\u0079\u006F\u0075, '+member);
     else respond('Hey, '+member+'!');
   } else if (text.indexOf('!mmo') == 0) {
     const cmd = text.slice(4, text.length).trim();
