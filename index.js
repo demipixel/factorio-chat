@@ -23,6 +23,10 @@ function init() {
   bot.on('message', m => {
     newMessage(m.content, m.member, m);
   });
+
+  bot.on('guildMemberAdd', (guild, member) => {
+    guild.defaultChannel.sendMessage('Welcome '+member+'! There are now '+guild.members.size+' total users.');
+  });
 }
 
 function log(...strs) {
@@ -44,7 +48,7 @@ function newMessage(text, member, message) {
   if (text == '!hey') {
     if (config.get('admins').indexOf(member.id) != -1) respond('\u0046\u0075\u0063\u006B\u0020\u0079\u006F\u0075, '+member);
     else respond('Hey, '+member+'!');
-  } else if (text.indexOf('!mmo') == 0) {
+  } else if (text.startsWith('!mmo')) {
     const cmd = text.slice(4, text.length).trim();
     if (!cmd) { respond(member, 'Try `!mmo on` or `!mmo off`'); return; }
 
