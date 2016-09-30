@@ -25,7 +25,7 @@ function init() {
   });
 
   bot.on('guildMemberAdd', (guild, member) => {
-    guild.defaultChannel.sendMessage('Welcome '+member+'! There are now '+guild.members.size+' total users.');
+    //guild.defaultChannel.sendMessage('Welcome '+member+'! There are now '+guild.members.size+' total users.');
   });
 }
 
