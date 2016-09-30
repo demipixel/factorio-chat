@@ -55,6 +55,8 @@ function newMessage(text, member, message) {
       member.addRole(role).then(() => respond(member, 'You will now be notified of upcoming MMO events!'));
     } else if (cmd == 'off') {
       member.removeRole(role).then(() => respond(member, 'You will no longer be notified of MMO events.'));
+    } else if (cmd == 'count') {
+      respond(member, role.memebers.size+' people are being notified of upcoming MMO events.');
     } else {
       respond(member, 'Unknown !mmo command.');
     }
