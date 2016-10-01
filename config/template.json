@@ -5,5 +5,9 @@
   },
 
   "admins": [""],
-  "mmoid": ""
+  "mmoid": "",
+  "channels": {
+    "default": "",
+    "mmo": ""
+  }
 }

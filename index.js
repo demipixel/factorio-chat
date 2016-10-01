@@ -5,10 +5,16 @@ const Discord = require('discord.js');
 const moment = require('moment');
 const storage = require('node-persist');
 const request = require('request');
+//const express = require('express');
+const gen = require('random-seed');
 //const blueprintText = require('./lib/blueprintText'); 
 
 let tmpStorage = {};
+const mmoCodes = {};
+const mmoMembers = {};
+
 const bot = new Discord.Client();
+//const app = express();
 
 function init() {
   bot.login(config.get('discord.token'));
@@ -27,6 +33,10 @@ function init() {
   bot.on('guildMemberAdd', (guild, member) => {
     //guild.defaultChannel.sendMessage('Welcome '+member+'! There are now '+guild.members.size+' total users.');
   });
+
+  /*app.listen(3000, function() {
+    console.log('Express server enabled');
+  });*/
 }
 
 function log(...strs) {
@@ -40,15 +50,16 @@ function saveStorage() {
 }
 
 function newMessage(text, member, message) {
-  log('['+member.id+'] #'+message.channel.name+'-'+member.user.username+': '+text);
-  if (member.id == bot.id) return;
+  log('['+(member?member.id:message.channel.id)+'] #'+message.channel.name+'-'+(member ? member.user.username : message.channel.id)+': '+text);
+  if (message.channel.id == bot.id || (member && member.id == bot.id)) return;
+  if (!member) member = {};
   const respond = (mention, str) => {
     message.channel.sendMessage(str ? mention+': '+str : mention).catch(e => console.log(e));
   }
   if (text == '!hey') {
     if (config.get('admins').indexOf(member.id) != -1) respond('\u0046\u0075\u0063\u006B\u0020\u0079\u006F\u0075, '+member);
     else respond('Hey, '+member+'!');
-  } else if (text.startsWith('!mmo')) {
+  } else if (text.startsWith('!mmo') && config.get('channels.default') == message.channel.guild.id) {
     const cmd = text.slice(4, text.length).trim();
     if (!cmd) { respond(member, 'Try `!mmo on` or `!mmo off`'); return; }
 
@@ -64,6 +75,49 @@ function newMessage(text, member, message) {
     } else {
       respond(member, 'Unknown !mmo command.');
     }
+  } else if (text.startsWith('!mmo') && config.get('channels.mmo') == message.channel.guild.id) {
+    return;
+    const cmd = text.slice(4, text.length).trim();
+    if (!cmd) { respond(member, 'Try `!mmo connect`'); return; }
+
+    if (cmd == 'connect') {
+      const g = gen.create();
+      g.seed(member.user.id);
+      const code = generateCode(g, member);
+      member.sendMessage('When you get in game, type `!code '+code+'`');
+    } else {
+      respond(member, 'Unknown !mmo command.');
+    }
+  } else if (text.startsWith('!team') && config.get('channels.mmo') == message.channel.guild.id) {
+    const team = text.slice(5, text.length).trim().toLowerCase();
+    const validTeams = ['a', 'alien', 't', 'tree', 'trees', 'aliens'];
+    const convertTeam = {
+      'a': 'Aliens',
+      'alien': 'Aliens',
+      'aliens': 'Aliens',
+
+      't': 'Trees',
+      'tree': 'Trees',
+      'trees': 'Trees'
+    };
+    const oppositeTeam = {
+      'Aliens': 'Trees',
+      'Trees': 'Aliens'
+    }
+    const teamId = {
+      'Aliens': '230711907860873216',
+      'Trees': '230711999376523265'
+    }
+    if (validTeams.indexOf(team) == -1) { respond(member, 'Invalid team! Try "tree" or "alien".'); return; }
+    const role = message.channel.guild.roles.get(teamId[convertTeam[team]]);
+    const oppRole = message.channel.guild.roles.get(teamId[oppositeTeam[convertTeam[team]]]);
+
+    //console.log(message.channel.guild.roles);
+    if (member.user.id != '125696820901838849') member.removeRole(oppRole).then(() => {
+      member.addRole(role).then(() => {
+        respond(member, 'You are now on Team '+convertTeam[team]+'!');
+      }).catch(err => console.log(err));
+    });
   } else {
     return;
     const bpText = blueprintText(text.replace(/[`\n]/g, '').trim());
@@ -86,6 +140,42 @@ tmpStorage = storage.getItemSync(config.get('discord.server'))
 if (!tmpStorage) {
   tmpStorage = {global: {}, users: {}};
   storage.setItemSync(config.get('discord.server'), tmpStorage);
+}
+
+/*app.get('/api', (req, res) => {
+  const user = req.query.user;
+  const message = req.query.message;
+  const team = req.query.team;
+  const key = req.query.key;
+
+  if (key != 'sjGDGBd6350DFNET5DFJSK3') return res.send('Invalid key');
+  console.log(user+': '+message);
+  const match = message.match(/!code (.+)/);
+  if (match && mmoCodes[match[1]]) {
+    mmoCodes[match[1]].sendMessage('You are now on team '+team);
+
+    const guild = bot.guilds.get(config.get('channels.mmo'));
+    const role = message.channel.guild.roles.get(team);
+
+    if (role) mmoCodes[match[1]].addRole(role);
+    else mmoCodes[match[1]].sendMessage('Could not find role '+team+'!');
+  }
+  res.send('');
+});*/
+
+const codeLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+function generateCode(g, member) {
+  if (mmoMembers[member.user.id]) return mmoMembers[member.user.id];
+  else {
+    let code = '';
+    for (var i = 0; i < 5; i++) {
+      code += codeLetters[g.intBetween(0, codeLetters.length-1)];
+    }
+    while (mmoCodes[code]) {
+      code += codeLetters[g.intBetween(0, codeLetters.length-1)];
+    }
+    return code;
+  }
 }
 
 // Init and login bot
