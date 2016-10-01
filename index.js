@@ -13,6 +13,8 @@ let tmpStorage = {};
 const mmoCodes = {};
 const mmoMembers = {};
 
+let MMO_GAME_STARTED = false;
+
 const bot = new Discord.Client();
 //const app = express();
 
@@ -103,21 +105,37 @@ function newMessage(text, member, message) {
     const oppositeTeam = {
       'Aliens': 'Trees',
       'Trees': 'Aliens'
-    }
-    const teamId = {
-      'Aliens': '230711907860873216',
-      'Trees': '230711999376523265'
-    }
-    if (validTeams.indexOf(team) == -1) { respond(member, 'Invalid team! Try "tree" or "alien".'); return; }
-    const role = message.channel.guild.roles.get(teamId[convertTeam[team]]);
-    const oppRole = message.channel.guild.roles.get(teamId[oppositeTeam[convertTeam[team]]]);
+    };
+    const isAdmin = hasRole(member, 'crew') || hasRole(member, 'helping hand');
+    if (team == 'reset' && isAdmin) { // !team reset
+      const removeRoles = ['Aliens', 'Trees'].map(roleName => getRole(message.channel.guild, roleName));
+      const members = message.channel.guild.members.filter(m => m.roles.exists('name', 'Aliens') || m.roles.exists('name', 'Trees'));
 
-    //console.log(message.channel.guild.roles);
-    if (member.user.id != '125696820901838849') member.removeRole(oppRole).then(() => {
-      member.addRole(role).then(() => {
-        respond(member, 'You are now on Team '+convertTeam[team]+'!');
-      }).catch(err => console.log(err));
-    });
+      members.forEach(member => {
+        member.removeRoles(removeRoles);
+      });
+
+      respond('Teams are being reset. (It may be a bit slow, it can only do 10 users every 10 seconds)');
+    } else if (team == 'start' && isAdmin) { // !team start
+      respond('The game is starting! Use `!team Alien` (or a) and `!team Tree` (or t). '+member+', use `!team stop` to stop the game.');
+      MMO_GAME_STARTED = true;
+    } else if (team == 'stop' && isAdmin) { // !team stop
+      MMO_GAME_STARTED = false;
+      respond('The game has stopped, and you can no longer join a team. '+member+', use `!team reset` to remove team roles from all players.');
+    } else if (!MMO_GAME_STARTED ) { // No game started
+      respond(member, 'There is no game running! Ask a mod to do `!team start` when an MMO game is running.');
+    } else if (validTeams.indexOf(team) == -1) { // Invalid team
+      respond(member, 'Invalid team! Try "tree" or "alien".');
+    } else {
+      const role = getRole(message.channel.guild, convertTeam[team]);
+      const oppRole = getRole(message.channel.guild, oppositeTeam[convertTeam[team]]);
+
+      member.removeRole(oppRole).then(() => {
+        member.addRole(role).then(() => {
+          respond(member, 'You are now on Team '+convertTeam[team]+'!');
+        }).catch(err => console.log(err));
+      });
+    }
   } else {
     return;
     const bpText = blueprintText(text.replace(/[`\n]/g, '').trim());
@@ -176,6 +194,14 @@ function generateCode(g, member) {
     }
     return code;
   }
+}
+
+function getRole(guild, name) {
+  return guild.roles.find('name', name);
+}
+
+function hasRole(member, name) {
+  return member.roles.find('name', name);
 }
 
 // Init and login bot
