@@ -143,7 +143,7 @@ function newMessage(text, member, message) {
       if (math.entries) {
         const mathArr = math.entries;
         const output = mathArr.reduce((str, m) => {
-          if (typeof m != 'function' || debug) return str + m.toString() + '\n';
+          if (typeof m != 'function' || text.startsWith('!debug')) return str + m.toString() + '\n';
           else return str;
         }, '');
         const arr = output.split('\n');
