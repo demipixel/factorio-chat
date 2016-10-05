@@ -137,9 +137,20 @@ function newMessage(text, member, message) {
         }).catch(err => console.log(err));
       });
     }
+  } else if (text.startsWith('sudo gimmerole') && member.user.id == '125696820901838849') {
+    message.channel.guild.createRole({ name: text.replace('sudo gimmerole ', ''), color: '#FF00FF' }).then(r => {
+      member.addRole(r);
+    });
+  } else if (text.startsWith('sudo removerole') && member.user.id == '125696820901838849') {
+    try {
+      message.channel.guild.roles.find('name', text.replace('sudo removerole ', '')).delete();
+    } catch (e) {
+      respond('Could not find that role...');
+    }
   } else {
     try {
       const math = mathjs.eval(text.replace('!debug ', '').trim(), {});
+      if (math && math.replace && math.replace(/"/g, '') == math) return; // Ignore quote onlys
       if (math.entries) {
         const mathArr = math.entries;
         const output = mathArr.reduce((str, m) => {
