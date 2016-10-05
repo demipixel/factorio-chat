@@ -54,7 +54,6 @@ function saveStorage() {
 
 function newMessage(text, member, message) {
   log('['+(member?member.id:message.channel.id)+'] #'+message.channel.name+'-'+(member ? member.user.username : message.channel.id)+': '+text);
-  console.log(message.client, member.user.bot);
   if (member && member.user.bot) return;
   if (!member) member = {};
   const respond = (mention, str) => {
