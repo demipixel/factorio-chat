@@ -8,6 +8,7 @@ const request = require('request');
 //const express = require('express');
 const gen = require('random-seed');
 //const blueprintText = require('./lib/blueprintText'); 
+const mathjs = require('mathjs');
 
 let tmpStorage = {};
 const mmoCodes = {};
@@ -53,10 +54,11 @@ function saveStorage() {
 
 function newMessage(text, member, message) {
   log('['+(member?member.id:message.channel.id)+'] #'+message.channel.name+'-'+(member ? member.user.username : message.channel.id)+': '+text);
-  if (message.channel.id == bot.id || (member && member.id == bot.id)) return;
+  console.log(message.client, member.user.bot);
+  if (member && member.user.bot) return;
   if (!member) member = {};
   const respond = (mention, str) => {
-    message.channel.sendMessage(str ? mention+': '+str : mention).catch(e => console.log(e));
+    message.channel.sendMessage(str !== undefined ? mention+': '+str : mention).catch(e => console.log(e));
   }
   if (text == '!hey') {
     if (config.get('admins').indexOf(member.id) != -1) respond('\u0046\u0075\u0063\u006B\u0020\u0079\u006F\u0075, '+member);
@@ -137,6 +139,22 @@ function newMessage(text, member, message) {
       });
     }
   } else {
+    try {
+      const math = mathjs.eval(text.replace('!debug ', '').trim(), {});
+      if (math.entries) {
+        const mathArr = math.entries;
+        const output = mathArr.reduce((str, m) => {
+          if (typeof m != 'function' || debug) return str + m.toString() + '\n';
+          else return str;
+        }, '');
+        const arr = output.split('\n');
+        if (output) respond(member, '\n'+arr.slice(0, 5).join('\n')+(arr.length > 5 ? '\n...' : ''));
+      } else if (typeof math != 'function' || text.startsWith('!debug')) {
+        respond(member, math);
+      }
+    } catch (e) {
+      if (text.startsWith('!debug')) respond(member, e);
+    }
     return;
     const bpText = blueprintText(text.replace(/[`\n]/g, '').trim());
     if (bpText) {
