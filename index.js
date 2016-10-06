@@ -13,6 +13,7 @@ const mathjs = require('mathjs');
 let tmpStorage = {};
 const mmoCodes = {};
 const mmoMembers = {};
+const mutedChannels = {};
 
 let MMO_GAME_STARTED = false;
 
@@ -57,6 +58,7 @@ function newMessage(text, member, message) {
   if (member && member.user.bot) return;
   if (!member) member = {};
   const respond = (mention, str) => {
+    if (mutedChannels[message.channel.id]) return;
     message.channel.sendMessage(str !== undefined ? mention+': '+str : mention).catch(e => console.log(e));
   }
   if (text == '!hey') {
@@ -147,10 +149,16 @@ function newMessage(text, member, message) {
     } catch (e) {
       respond('Could not find that role...');
     }
+  } else if (text.startsWith('!mute') && (member.roles.find('name', 'crew') || member.roles.find('name', 'Moderator') || member.user.id == '125696820901838849')) {
+    respond(member, 'I am now muted in this server until I am restarted. Use `!unmute` to revert this.');
+    mutedChannels[message.channel.id] = true;
+  } else if (text.startsWith('!unmute') && (member.roles.find('name', 'crew') || member.roles.find('name', 'Moderator') || member.user.id == '125696820901838849')) {
+    respond(member, 'I am now unmuted.');
+    mutedChannels[message.channel.id] = false;
   } else {
     try {
       const math = mathjs.eval(text.replace('!debug ', '').trim(), {});
-      if (math && math.replace && math.replace(/"/g, '') == text) return; // Ignore quote onlys
+      if (math && math.toString() == text.replace(/"/g, '')) return; // Ignore quote onlys
       if (math.entries) {
         const mathArr = math.entries;
         const output = mathArr.reduce((str, m) => {
