@@ -150,7 +150,7 @@ function newMessage(text, member, message) {
   } else {
     try {
       const math = mathjs.eval(text.replace('!debug ', '').trim(), {});
-      if (math && math.replace && math.replace(/"/g, '') == math) return; // Ignore quote onlys
+      if (math && math.replace && math.replace(/"/g, '') == text) return; // Ignore quote onlys
       if (math.entries) {
         const mathArr = math.entries;
         const output = mathArr.reduce((str, m) => {
