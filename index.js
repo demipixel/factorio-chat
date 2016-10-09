@@ -56,6 +56,7 @@ function saveStorage() {
 function newMessage(text, member, message) {
   log('['+(member?member.id:message.channel.id)+'] #'+message.channel.name+'-'+(member ? member.user.username : message.channel.id)+': '+text);
   if (member && member.user.bot) return;
+  if (!message.channel.guild) return; // PM
   if (!member) member = {};
   const respond = (mention, str) => {
     if (mutedChannels[message.channel.id]) return;
