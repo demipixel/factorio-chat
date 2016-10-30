@@ -57,7 +57,7 @@ function newMessage(text, member, message) {
   log('['+(member?member.id:message.channel.id)+'] #'+message.channel.name+'-'+(member ? member.user.username : message.channel.id)+': '+text);
   if (member && member.user.bot) return;
   if (!message.channel.guild) return; // PM
-  if (!member) member = {};
+  if (!member) return;
   const respond = (mention, str) => {
     if (mutedChannels[message.channel.id]) return;
     message.channel.sendMessage(str !== undefined ? mention+': '+str : mention).catch(e => console.log(e));
@@ -138,7 +138,7 @@ function newMessage(text, member, message) {
         member.addRole(role).then(() => {
           respond(member, 'You are now on Team '+convertTeam[team]+'!');
         }).catch(err => console.log(err));
-      });
+      }).catch(e => console.log(e));
     }
   } else if (text.startsWith('sudo gimmerole') && member.user.id == '125696820901838849') {
     message.channel.guild.createRole({ name: text.replace('sudo gimmerole ', ''), color: '#FF00FF' }).then(r => {
