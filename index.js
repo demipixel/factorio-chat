@@ -110,7 +110,7 @@ function newMessage(text, member, message) {
       'Aliens': 'Trees',
       'Trees': 'Aliens'
     };
-    const isAdmin = hasRole(member, 'crew') || hasRole(member, 'helping hand');
+    const isAdmin = hasRole(member, 'crew') || hasRole(member, 'hands') || hasRole(member, 'crew-us');;
     if (team == 'reset' && isAdmin) { // !team reset
       const removeRoles = ['Aliens', 'Trees'].map(roleName => getRole(message.channel.guild, roleName));
       const members = message.channel.guild.members.filter(m => m.roles.exists('name', 'Aliens') || m.roles.exists('name', 'Trees'));
