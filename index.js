@@ -158,9 +158,9 @@ function newMessage(text, member, message) {
     mutedChannels[message.channel.id] = false;
   } else {
     try {
+      if (text.replace('!debug ', '').trim()[0] == ':') return; // Breaks bot if too big
       const math = mathjs.eval(text.replace('!debug ', '').trim(), {});
       if (math && math.toString() == text.replace(/"/g, '')) return; // Ignore quote onlys
-      else if (math[0] == ':') return; // Breaks bot if too big
       if (math.entries) {
         const mathArr = math.entries;
         const output = mathArr.reduce((str, m) => {
