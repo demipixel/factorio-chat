@@ -160,6 +160,7 @@ function newMessage(text, member, message) {
     try {
       const math = mathjs.eval(text.replace('!debug ', '').trim(), {});
       if (math && math.toString() == text.replace(/"/g, '')) return; // Ignore quote onlys
+      else if (math[0] == ':') return; // Breaks bot if too big
       if (math.entries) {
         const mathArr = math.entries;
         const output = mathArr.reduce((str, m) => {
