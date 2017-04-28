@@ -10,6 +10,8 @@ const gen = require('random-seed');
 const blueprintText = require('./lib/blueprintText'); 
 const mathjs = require('mathjs');
 
+const Blueprint = require('factorio-blueprint');
+
 let tmpStorage = {};
 const mmoCodes = {};
 const mmoMembers = {};
@@ -176,13 +178,13 @@ function newMessage(text, member, message) {
       if (text.startsWith('!debug')) respond(member, e);
     }
     // return;
-    parseBlueprintString(text.replace(/[`\n]/g, '').trim(), respond);
+    parseBlueprintString(text.replace(/[`\n]/g, '').trim(), member, respond);
 
-    const match = text.match(/((p|h)astebin).com\/([0-9a-zA-Z]+)/);
+    const match = text.match(/((p|h)astebin).com\/(raw\/)?([0-9a-zA-Z]+)/);
     if (match) {
-      request('https://'+match[2]+'astebin.com/raw/'+match[3], (err, http, body) => {
+      request('https://'+match[2]+'astebin.com/raw/'+match[4], (err, http, body) => {
         if (err) return;
-        parseBlueprintString(body, respond);
+        parseBlueprintString(body, member, respond);
       });
     }
   }
@@ -233,15 +235,32 @@ function generateCode(g, member) {
   }
 }
 
-function parseBlueprintString(text, cb) {
+function parseBlueprintString(text, member, cb) {
   const bpText = blueprintText(text.replace(/[`\n]/g, '').trim());
   if (bpText) {
-    const response = '```\n'+bpText.str+'```\n'+
+    let response = '```\n'+bpText.str+'```\n'+
                 Object.keys(bpText.map).map(key => bpText.map[key]+' = '+key.split('_')
                                                  .map(word => word[0].toUpperCase() + word.slice(1))
                                                  .join(' '))
                 .join('\n');
-    if (response > 2000) cb(member, 'That blueprint string is too large to scan!');
+    if (response.length > 2000) {
+      let bp = new Blueprint(text.replace(/[`\n]/g, '').trim());
+      response = 'That blueprint is too large to output! Here\'s some other info instead:\n';
+      response += 'Size: '+(bp.topRight().x - bp.topLeft().x)+'x'+(bp.bottomRight().y - bp.topRight().y)+'\n';
+      const entityCounts = bp.entities.reduce((obj, ent) => {
+        if (!obj[ent.name]) obj[ent.name] = 1;
+        else obj[ent.name]++;
+        return obj;
+      }, {});
+      console.log(entityCounts);
+      response += 'Top ten items:\n';
+      response += Object.keys(entityCounts)
+                    .sort((a, b) => entityCounts[b] - entityCounts[a])
+                    .slice(0, 10)
+                    .map(entityName => '- **'+entityName.split('_').map(word => word[0].toUpperCase() + word.slice(1)).join(' ')+'** (x'+entityCounts[entityName]+')')
+                    .join('\n');
+      cb(member, response);
+    }
     else cb(response);
   }
 }
