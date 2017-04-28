@@ -7,7 +7,7 @@ const storage = require('node-persist');
 const request = require('request');
 //const express = require('express');
 const gen = require('random-seed');
-//const blueprintText = require('./lib/blueprintText'); 
+const blueprintText = require('./lib/blueprintText'); 
 const mathjs = require('mathjs');
 
 let tmpStorage = {};
@@ -26,7 +26,7 @@ function init() {
     log('Bot connected to Discord');
   });
 
-  bot.on('disconnected', () => {
+  bot.on('disconnect', () => {
     bot.login(config.get('discord.token'));
   });
 
@@ -175,16 +175,15 @@ function newMessage(text, member, message) {
     } catch (e) {
       if (text.startsWith('!debug')) respond(member, e);
     }
-    return;
-    const bpText = blueprintText(text.replace(/[`\n]/g, '').trim());
-    if (bpText) {
-      const response = '```\n'+bpText.str+'```\n'+
-                  Object.keys(bpText.map).map(key => bpText.map[key]+' = '+key.split('_')
-                                                   .map(word => word[0].toUpperCase() + word.slice(1))
-                                                   .join(' '))
-                  .join('\n');
-      if (response > 2000) respond(member, 'That blueprint string is too large to scan!');
-      else respond(response);
+    // return;
+    parseBlueprintString(text.replace(/[`\n]/g, '').trim(), respond);
+
+    const match = text.match(/((p|h)astebin).com\/([0-9a-zA-Z]+)/);
+    if (match) {
+      request('https://'+match[2]+'astebin.com/raw/'+match[3], (err, http, body) => {
+        if (err) return;
+        parseBlueprintString(body, respond);
+      });
     }
   }
 }
@@ -231,6 +230,19 @@ function generateCode(g, member) {
       code += codeLetters[g.intBetween(0, codeLetters.length-1)];
     }
     return code;
+  }
+}
+
+function parseBlueprintString(text, cb) {
+  const bpText = blueprintText(text.replace(/[`\n]/g, '').trim());
+  if (bpText) {
+    const response = '```\n'+bpText.str+'```\n'+
+                Object.keys(bpText.map).map(key => bpText.map[key]+' = '+key.split('_')
+                                                 .map(word => word[0].toUpperCase() + word.slice(1))
+                                                 .join(' '))
+                .join('\n');
+    if (response > 2000) cb(member, 'That blueprint string is too large to scan!');
+    else cb(response);
   }
 }
 
