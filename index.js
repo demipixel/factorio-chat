@@ -23,14 +23,16 @@ const bot = new Discord.Client();
 //const app = express();
 
 function init() {
-  bot.login(config.get('discord.token'));
+  bot.login(config.get('discord.token')).catch(e => {
+    throw e
+  });
   bot.on('ready', () => {
     log('Bot connected to Discord');
   });
 
-  bot.on('disconnect', () => {
+  /*bot.on('disconnect', () => {
     bot.login(config.get('discord.token'));
-  });
+  });*/
 
   bot.on('message', m => {
     newMessage(m.content, m.member, m);
@@ -177,13 +179,13 @@ function newMessage(text, member, message) {
     } catch (e) {
       if (text.startsWith('!debug')) respond(member, e);
     }
-    // return;
+
     parseBlueprintString(text.replace(/[`\n]/g, '').trim(), member, respond);
 
     const match = text.match(/((p|h)astebin).com\/(raw\/)?([0-9a-zA-Z]+)/);
     if (match) {
       request('https://'+match[2]+'astebin.com/raw/'+match[4], (err, http, body) => {
-        if (err) return;
+        if (err) return console.log(err);
         parseBlueprintString(body, member, respond);
       });
     }
@@ -244,7 +246,7 @@ function parseBlueprintString(text, member, cb) {
                                                  .join(' '))
                 .join('\n');
     if (response.length > 2000) {
-      let bp = new Blueprint(text.replace(/[`\n]/g, '').trim());
+      let bp = new Blueprint(text.replace(/[`\n]/g, '').trim(), { checkWithEntityData: false });
       response = 'That blueprint is too large to output! Here\'s some other info instead:\n';
       response += 'Size: '+(bp.topRight().x - bp.topLeft().x)+'x'+(bp.bottomRight().y - bp.topRight().y)+'\n';
       const entityCounts = bp.entities.reduce((obj, ent) => {
