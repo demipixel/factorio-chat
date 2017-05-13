@@ -62,7 +62,7 @@ function newMessage(text, member, message) {
   if (member && member.user.bot) return;
   if (!message.channel.guild) return; // PM
   if (!member) return;
-  if (!message) return;
+  if (!text) return;
   const respond = (mention, str) => {
     if (mutedChannels[message.channel.id]) return;
     message.channel.sendMessage(str !== undefined ? mention+': '+str : mention).catch(e => console.log(e));
